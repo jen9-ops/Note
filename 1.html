@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Таблиця даних — Dark</title>
+  <link rel="icon" href="https://jen9-ops.github.io/Note/icon.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    :root{
+      --bg:#0e1114;
+      --card:#151A1F;
+      --muted:#98a2b3;
+      --text:#F2F5F7;
+      --sub:#D6DBDF;
+      --border:#222A31;
+      --accent:#4a7bf7;
+      --accent-2:#2f6df5;
+      --success:#2e7d32;
+      --warn:#e0a800;
+      --danger:#c62828;
+      --chip-yellow:#3a2f12;
+      --chip-orange:#3b2611;
+      --row-even:#13171b;
+      --row-odd:#0f1317;
+      --input-bg:#0f1317;
+      --input-br:#29313a;
+      --shadow: 0 8px 30px rgba(0,0,0,.35);
+    }
+    *{box-sizing:border-box}
+    body{
+      font-family: system-ui, 'Segoe UI', Tahoma, Arial, sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      margin:0;
+      padding:20px;
+    }
+    a{color:var(--accent)}
+    .container{
+      max-width:1200px;margin:0 auto;background:var(--card);
+      padding:30px;border-radius:14px;box-shadow:var(--shadow);border:1px solid var(--border);
+    }
+    h1{margin:0 0 20px;font-size:28px;color:var(--sub);text-align:center}
+    .main-controls{
+      display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:20px
+    }
+    .btn{
+      appearance:none;border:1px solid var(--border);background:#1a2128;color:#fff;
+      padding:10px 16px;border-radius:10px;cursor:pointer;transition:.15s;
+      display:inline-flex;align-items:center;gap:8px;font-weight:600;
+    }
+    .btn:hover{transform:translateY(-1px);border-color:#33414f}
+    .btn.secondary{background:#232a33}
+    .btn.primary{background:var(--accent);border-color:transparent}
+    .btn.primary:hover{background:var(--accent-2)}
+    .btn.success{background:var(--success)}
+    .btn.warning{background:#b8860b;color:#111}
+    .btn.danger{background:var(--danger)}
+    .btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+
+    .stats-block{
+      display:flex;justify-content:space-around;align-items:center;
+      background:#0f1419;border:1px solid var(--border);border-radius:12px;
+      padding:14px;margin-bottom:20px;font-weight:700;color:var(--sub)
+    }
+    .stats-block span span{color:#9ab4ff}
+
+    .search-control{display:flex;justify-content:center;margin-bottom:18px}
+    .input, input[type="number"], input[type="text"]{
+      background:var(--input-bg);border:1px solid var(--input-br);color:var(--text);
+      padding:10px;border-radius:10px;outline:none;width:100%;
+    }
+    .input::placeholder, input::placeholder{color:#8b97a3}
+
+    #dataForm{
+      display:grid;grid-template-columns:repeat(3,1fr) auto;gap:10px;margin-bottom:18px;
+    }
+    .add-btn{
+      background:#1e2630;border:1px solid var(--border);color:#fff;padding:10px 14px;
+      border-radius:10px;cursor:pointer;font-weight:600;
+    }
+    .add-btn:hover{background:#232d39}
+
+    .action-buttons{
+      display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:10px;margin-bottom:20px
+    }
+
+    #newTargetControl{
+      display:flex;flex-direction:column;gap:10px;align-items:center;background:#0f1419;
+      border:1px dashed var(--border);padding:12px;border-radius:12px
+    }
+
+    table{width:100%;border-collapse:collapse;margin-top:18px;border:1px solid var(--border)}
+    th,td{padding:14px;text-align:left;border-bottom:1px solid var(--border)}
+    thead th{background:#10161c;color:#d7dde4;position:sticky;top:0}
+    tbody tr:nth-child(odd){background:var(--row-odd)}
+    tbody tr:nth-child(even){background:var(--row-even)}
+    .highlight-yellow{background:var(--chip-yellow) !important}
+    .highlight-orange{background:var(--chip-orange) !important}
+
+    .section-divider{
+      border-top:2px solid #29415f;margin:22px 0;position:relative;text-align:center
+    }
+    .divider-content{
+      position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+      background:var(--card);padding:4px 12px;border-radius:8px;border:1px solid var(--border);
+      color:var(--sub);display:flex;flex-direction:column;gap:4px
+    }
+    .divider-text{font-weight:800}
+    .divider-input{
+      background:var(--input-bg);border:1px solid var(--input-br);color:var(--text);
+      padding:6px 10px;border-radius:8px;min-width:220px
+    }
+    .divider-coords{font-size:12px;color:var(--muted);font-style:italic}
+
+    .shift-header{text-align:center;font-size:20px;font-weight:800;margin-bottom:12px;color:#c1c8d0}
+
+    .delete-btn{
+      background:none;border:1px solid #3b2a2a;color:#ff9d9d;font-size:18px;cursor:pointer;
+      padding:4px 10px;border-radius:8px
+    }
+    .delete-btn:hover{background:#3b2a2a}
+
+    .modal{display:none;position:fixed;z-index:10;inset:0;background:rgba(0,0,0,.6)}
+    .modal-content{
+      background:var(--card);border:1px solid var(--border);color:var(--text);
+      margin:5% auto;padding:18px;border-radius:12px;box-shadow:var(--shadow);width:92%;max-width:520px
+    }
+    .close-btn{float:right;font-size:26px;color:#a5b2bf;cursor:pointer}
+    .close-btn:hover{color:#fff}
+
+    .modal .action-buttons{flex-direction:column;gap:10px}
+    .modal .action-buttons .btn, .modal .action-buttons label{width:100%}
+    .modal .shift-control{display:flex;gap:10px;margin-bottom:10px}
+    .modal .shift-control button{
+      width:50%;background:#1b222a;border:1px solid var(--border);color:#c8d1db;border-radius:10px;padding:10px;cursor:pointer
+    }
+    .modal .shift-control button.active{background:var(--accent);color:#fff;border-color:transparent}
+
+    /* калькулятор */
+    #calculatorModal .modal-content{max-width:320px}
+    .calc-inputs{display:flex;flex-direction:column;gap:8px;margin-bottom:10px;position:relative}
+    .take-value-menu{
+      position:absolute;top:100%;left:0;width:100%;background:var(--card);
+      border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow);z-index:20;padding:6px;display:none;flex-direction:column;gap:6px
+    }
+    .take-value-menu button{
+      background:#1b222a;border:1px solid var(--border);color:#d7dde4;padding:8px;border-radius:8px;cursor:pointer
+    }
+    .calc-buttons{display:flex;gap:10px;margin-bottom:10px}
+    .calc-buttons button{flex:1;background:#2b3643;border:1px solid var(--border);color:#fff;padding:14px;border-radius:10px;font-size:20px;font-weight:800}
+    #calcResult{font-size:26px;font-weight:900;color:#9ab4ff}
+    .write-back-buttons{display:none;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:10px}
+    .write-back-buttons button{background:var(--accent);border:none;color:#fff;padding:8px 12px;border-radius:8px}
+
+    /* inputs group in modal */
+    #ammoControl{display:flex;gap:8px;align-items:center;justify-content:center}
+
+    /* mobile */
+    @media (max-width:768px){
+      .container{padding:16px}
+      #dataForm{grid-template-columns:1fr}
+      .action-buttons, .modal .action-buttons{flex-direction:column;gap:12px}
+      .action-buttons>div{width:100%}
+      .action-buttons input,.action-buttons .btn,.action-buttons label{width:100%}
+      table, thead, tbody, th, td, tr{display:block}
+      thead{display:none}
+      tr{border:1px solid var(--border);margin-bottom:14px;border-radius:10px;overflow:hidden}
+      td{border:none;position:relative;padding-left:50%;text-align:right}
+      td:last-child{display:flex;justify-content:flex-end;align-items:center}
+      td:before{
+        content:attr(data-label);position:absolute;left:10px;width:45%;padding-right:10px;white-space:nowrap;text-align:left;
+        color:#9fb0bf;font-weight:700
+      }
+      .stats-block{flex-direction:column;gap:6px}
+
+.page-header{
+  display:flex;justify-content:space-between;align-items:center;
+  gap:12px;margin:-4px 0 16px 0;
+}
+.pos-wrap{display:flex;align-items:center;gap:10px}
+.pos-label{color:#9fb0bf}
+.pos-name{
+  font-weight:900;letter-spacing:.3px;color:#F2F5F7;
+  padding:6px 10px;border:1px solid var(--border);border-radius:10px;background:#1a2128;
+}
+.btn-sm{padding:8px 10px;font-size:.9em}
+.date-chip{
+  color:#cfd6dd;background:#0f1419;border:1px solid var(--border);
+  padding:6px 10px;border-radius:10px
+}
+
+
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Таблиця даних</h1>
+<div class="page-header">
+  <div class="pos-wrap">
+    <span class="pos-label">Позиція:</span>
+    <span id="positionDisplay" class="pos-name">Sultan</span>
+    <button id="editPositionBtn" class="btn secondary btn-sm" title="Редагувати назву">
+      <i class="fa-solid fa-pen"></i>
+    </button>
+  </div>
+  <div id="todayDate" class="date-chip"></div>
+</div>
+
+
+    <div class="main-controls">
+      <button id="calculatorBtn" class="btn secondary"><i class="fa-solid fa-calculator"></i>Калькулятор</button>
+      <button id="settingsBtn" class="btn"><i class="fa-solid fa-gear"></i>Налаштування</button>
+    </div>
+
+    <div class="stats-block">
+      <span>Загалом пострілів: <span id="totalShotsDisplay">0</span></span>
+      <span>Залишок б/к: <span id="remainingAmmoDisplay">0</span></span>
+    </div>
+
+    <div class="search-control">
+      <input class="input" type="text" id="searchInput" placeholder="Пошук по номеру цілі...">
+    </div>
+
+    <form id="dataForm">
+      <input class="input" type="text" id="riven" placeholder="Рівень" required>
+      <input class="input" type="text" id="dalnist" placeholder="Дальність" required>
+      <input class="input" type="text" id="kut" placeholder="Кут" required>
+      <button type="submit" class="btn secondary">Додати дані</button>
+    </form>
+
+    <div class="action-buttons">
+      <div id="newTargetControl">
+        <input class="input" type="text" id="newTargetInput" placeholder="Введіть номер цілі">
+        <input class="input" type="text" id="coordsInput" value="37U DQ " placeholder="Введіть координати">
+        <button id="newTargetBtn" class="btn primary"><i class="fa-solid fa-plus"></i>Нова ціль</button>
+      </div>
+      <button id="shotBtn" class="btn warning"><i class="fa-solid fa-forward"></i>Один вперед</button>
+      <button id="undoShotBtn" class="btn danger"><i class="fa-solid fa-rotate-left"></i>Відмінити останній постріл</button>
+    </div>
+
+    <div id="table-container">
+      <table id="dataTable">
+        <thead>
+          <tr>
+            <th>Рівень</th>
+            <th>Дальність</th>
+            <th>Кут</th>
+            <th>Кількість пострілів</th>
+            <th>Залишок б/к</th>
+            <th>Час пострілу</th>
+            <th>Час між пострілами</th>
+            <th>Дії</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Settings -->
+  <div id="settingsModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn">&times;</span>
+      <h2 style="margin-top:0;color:#cfd6dd">Налаштування</h2>
+
+      <div class="shift-control">
+        <button id="chesterShiftBtn">Честер</button>
+        <button id="kozakShiftBtn">Козак</button>
+      </div>
+
+      <div class="action-buttons">
+        <div id="ammoControl">
+          <label for="ammoInput" style="color:#a8b3bf">Встановити б/к:</label>
+          <input class="input" type="number" id="ammoInput" placeholder="Кількість б/к" min="0">
+          <button id="setAmmoBtn" class="btn success"><i class="fa-solid fa-circle-check"></i>Встановити</button>
+        </div>
+
+        <button id="downloadBtn" class="btn success"><i class="fa-solid fa-download"></i>Зберегти дані (JSON)</button>
+        <button id="downloadPdfBtn" class="btn success"><i class="fa-solid fa-file-pdf"></i>Зберегти в PDF</button>
+        <button id="sharePdfBtn" class="btn primary"><i class="fa-solid fa-share-nodes"></i>Поділитися PDF</button>
+
+        <label id="uploadLabel" class="btn secondary" for="uploadInput"><i class="fa-solid fa-upload"></i>Відкрити файл</label>
+        <input type="file" id="uploadInput" accept=".json" style="display:none">
+        <button id="clearAllDataBtn" class="btn danger"><i class="fa-solid fa-trash-can"></i>Видалити всі дані</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Calculator -->
+  <div id="calculatorModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" id="closeCalcBtn">&times;</span>
+      <h2 style="margin-top:0;color:#cfd6dd">Калькулятор</h2>
+
+      <div class="calc-inputs">
+        <input class="input" type="number" id="calcInput1" placeholder="Перше число">
+        <input class="input" type="number" id="calcInput2" placeholder="Друге число">
+        <div class="take-value-menu" id="takeValueMenu">
+          <button id="takeRivenBtn">Взяти Рівень</button>
+          <button id="takeDalnistBtn">Взяти Дальність</button>
+          <button id="takeKutBtn">Взяти Кут</button>
+        </div>
+      </div>
+
+      <div class="calc-buttons">
+        <button id="calcAddBtn">+</button>
+        <button id="calcSubtractBtn">-</button>
+      </div>
+
+      <h3 style="margin:8px 0;color:#a8b3bf">Результат: <span id="calcResult">0</span></h3>
+
+      <div class="write-back-buttons" id="writeBackButtons">
+        <span style="color:#9fb0bf">Записати результат в:</span>
+        <button id="writeToRivenBtn">Рівень</button>
+        <button id="writeToDalnistBtn">Дальність</button>
+        <button id="writeToKutBtn">Кут</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    "use strict";
+    document.addEventListener('DOMContentLoaded', () => {
+      const chesterShiftBtn = document.getElementById('chesterShiftBtn');
+      const kozakShiftBtn = document.getElementById('kozakShiftBtn');
+      const settingsBtn = document.getElementById('settingsBtn');
+      const calculatorBtn = document.getElementById('calculatorBtn');
+      const settingsModal = document.getElementById('settingsModal');
+      const calculatorModal = document.getElementById('calculatorModal');
+      const closeSettingsBtn = settingsModal.querySelector('.close-btn');
+      const closeCalcBtn = document.getElementById('closeCalcBtn');
+
+      const searchInput = document.getElementById('searchInput');
+      const dataForm = document.getElementById('dataForm');
+      const rivenInput = document.getElementById('riven');
+      const dalnistInput = document.getElementById('dalnist');
+      const kutInput = document.getElementById('kut');
+
+      const newTargetBtn = document.getElementById('newTargetBtn');
+      const newTargetInput = document.getElementById('newTargetInput');
+      const coordsInput = document.getElementById('coordsInput');
+
+      const shotBtn = document.getElementById('shotBtn');
+      const undoShotBtn = document.getElementById('undoShotBtn');
+
+      const tableContainer = document.getElementById('table-container');
+
+      const ammoInput = document.getElementById('ammoInput');
+      const setAmmoBtn = document.getElementById('setAmmoBtn');
+      const totalShotsDisplay = document.getElementById('totalShotsDisplay');
+      const remainingAmmoDisplay = document.getElementById('remainingAmmoDisplay');
+
+      const downloadBtn = document.getElementById('downloadBtn');
+      const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+      const sharePdfBtn = document.getElementById('sharePdfBtn');
+      const uploadInput = document.getElementById('uploadInput');
+      const clearAllDataBtn = document.getElementById('clearAllDataBtn');
+
+      // calc
+      const calcInput1 = document.getElementById('calcInput1');
+      const calcInput2 = document.getElementById('calcInput2');
+      const calcAddBtn = document.getElementById('calcAddBtn');
+      const calcSubtractBtn = document.getElementById('calcSubtractBtn');
+      const calcResult = document.getElementById('calcResult');
+      const takeValueMenu = document.getElementById('takeValueMenu');
+      const takeRivenBtn = document.getElementById('takeRivenBtn');
+      const takeDalnistBtn = document.getElementById('takeDalnistBtn');
+      const takeKutBtn = document.getElementById('takeKutBtn');
+      const writeBackButtons = document.getElementById('writeBackButtons');
+      const writeToRivenBtn = document.getElementById('writeToRivenBtn');
+      const writeToDalnistBtn = document.getElementById('writeToDalnistBtn');
+      const writeToKutBtn = document.getElementById('writeToKutBtn');
+
+const positionDisplay = document.getElementById('positionDisplay');
+const editPositionBtn = document.getElementById('editPositionBtn');
+const todayDateEl = document.getElementById('todayDate');
+
+
+      let currentShift = localStorage.getItem('currentShift') || 'Козак';
+      const shiftsData = JSON.parse(localStorage.getItem('shiftsData')) || {};
+
+      let currentAmmo = parseInt(localStorage.getItem(`${currentShift}-ammo`)) || 0;
+      let lastShotTime = null;
+
+      const COORDS_PREFIX = "37U DQ ";
+
+
+// === Позиція (название позиции) ===
+let positionName = localStorage.getItem('positionName') || 'Sultan';
+positionDisplay.textContent = positionName;
+
+// === Дата в шапке (локаль: ук-UA, таймзона Київ) ===
+try {
+  const now = new Date();
+  const fmt = new Intl.DateTimeFormat('uk-UA', { day:'2-digit', month:'2-digit', year:'numeric', timeZone:'Europe/Kyiv' });
+  todayDateEl.textContent = fmt.format(now);  // напр. 20.08.2025
+} catch {
+  const now = new Date();
+  todayDateEl.textContent = `${String(now.getDate()).padStart(2,'0')}.${String(now.getMonth()+1).padStart(2,'0')}.${now.getFullYear()}`;
+}
+
+
+      coordsInput.addEventListener('input', (event) => {
+        const input = event.target;
+        const value = input.value;
+
+        if (!value.startsWith(COORDS_PREFIX)) {
+          input.value = COORDS_PREFIX;
+          return;
+        }
+        const rawCoords = value.substring(COORDS_PREFIX.length).replace(/[^0-9]/g, '');
+        const formattedCoords = rawCoords.slice(0, 5) + (rawCoords.length > 5 ? ' ' + rawCoords.slice(5, 10) : '');
+        input.value = COORDS_PREFIX + formattedCoords;
+
+        const newCursorPosition = COORDS_PREFIX.length + formattedCoords.length;
+        input.setSelectionRange(newCursorPosition, newCursorPosition);
+      });
+      coordsInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Backspace' && coordsInput.value === COORDS_PREFIX) event.preventDefault();
+      });
+
+      const updateShiftButtons = () => {
+        chesterShiftBtn.classList.remove('active');
+        kozakShiftBtn.classList.remove('active');
+        (currentShift === 'Честер' ? chesterShiftBtn : kozakShiftBtn).classList.add('active');
+      };
+
+      const updateTotalStats = () => {
+        let totalShots = 0;
+        if (shiftsData[currentShift]) {
+          shiftsData[currentShift].forEach(item => {
+            if (item.isTable && item.content) {
+              item.content.forEach(row => {
+                if (row.shotCount) totalShots += parseInt(row.shotCount);
+              });
+            }
+          });
+        }
+        totalShotsDisplay.textContent = totalShots;
+        remainingAmmoDisplay.textContent = currentAmmo;
+      };
+
+      const updateAmmoDisplay = () => {
+        shotBtn.disabled = currentAmmo <= 0;
+        updateTotalStats();
+      };
+
+// Редактирование positionName без сброса данных
+editPositionBtn.addEventListener('click', () => {
+  // создаём инпут на месте текста
+  const current = positionDisplay.textContent;
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.value = current;
+  input.className = 'divider-input'; // есть тёмный стиль из твоего CSS
+  input.style.minWidth = '160px';
+
+  const parent = positionDisplay.parentElement;
+  parent.replaceChild(input, positionDisplay);
+  input.focus();
+  input.select();
+
+  const finish = () => {
+    const newName = input.value.trim() || 'Sultan';
+    positionName = newName;
+    localStorage.setItem('positionName', positionName);
+
+    // вернуть span
+    const span = document.createElement('span');
+    span.id = 'positionDisplay';
+    span.className = 'pos-name';
+    span.textContent = positionName;
+    parent.replaceChild(span, input);
+
+    // заново привязать ссылку на DOM (если понадобится дальше)
+    // (но в нашей логике больше не требуется)
+  };
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') finish();
+    if (e.key === 'Escape') { input.value = current; finish(); }
+  });
+  input.addEventListener('blur', finish);
+});
+
+
+      const saveData = () => {
+        const data = [];
+        const tableElements = tableContainer.children;
+        for (let i = 0; i < tableElements.length; i++) {
+          const element = tableElements[i];
+          if (element.tagName === 'TABLE') {
+            const tableData = [];
+            element.querySelectorAll('tbody tr').forEach(row => {
+              const rivenEl = row.querySelector('td[data-label="Рівень"]');
+              const dalnistEl = row.querySelector('td[data-label="Дальність"]');
+              const kutEl = row.querySelector('td[data-label="Кут"]');
+              const shotCountEl = row.querySelector('td[data-label="Кількість пострілів"]');
+              const ammoLeftEl = row.querySelector('td[data-label="Залишок б/к"]');
+              const timeDateEl = row.querySelector('td[data-label="Час пострілу"]');
+              const timeBetweenShotsEl = row.querySelector('td[data-label="Час між пострілами"]');
+
+              tableData.push({
+                riven: rivenEl ? rivenEl.textContent : '',
+                dalnist: dalnistEl ? dalnistEl.textContent : '',
+                kut: kutEl ? kutEl.textContent : '',
+                shotCount: shotCountEl ? shotCountEl.textContent : '',
+                ammoLeft: ammoLeftEl ? ammoLeftEl.textContent : '',
+                timeDate: timeDateEl ? timeDateEl.textContent : '',
+                timeBetween: timeBetweenShotsEl ? timeBetweenShotsEl.textContent : ''
+              });
+            });
+            data.push({ isTable: true, content: tableData });
+          } else if (element.classList.contains('section-divider')) {
+            const dividerTextEl = element.querySelector('.divider-text');
+            const dividerCoordsEl = element.querySelector('.divider-coords');
+            if (dividerTextEl) {
+              const dividerText = dividerTextEl.textContent;
+              const dividerCoords = dividerCoordsEl ? dividerCoordsEl.textContent : '';
+              data.push({ isDivider: true, text: dividerText, coords: dividerCoords });
+            }
+          }
+        }
+        shiftsData[currentShift] = data;
+        localStorage.setItem('shiftsData', JSON.stringify(shiftsData));
+        localStorage.setItem('currentShift', currentShift);
+        localStorage.setItem(`${currentShift}-ammo`, currentAmmo);
+      };
+
+      const loadData = (data = shiftsData[currentShift] || []) => {
+        tableContainer.innerHTML = '';
+        const shiftHeader = document.createElement('div');
+        shiftHeader.classList.add('shift-header');
+        shiftHeader.textContent = `Поточна зміна: ${currentShift}`;
+        tableContainer.appendChild(shiftHeader);
+
+        data.forEach(item => {
+          if (item.isTable) {
+            const newTable = document.createElement('table');
+            newTable.id = 'dataTable';
+            newTable.innerHTML = `
+              <thead>
+                <tr>
+                  <th>Рівень</th>
+                  <th>Дальність</th>
+                  <th>Кут</th>
+                  <th>Кількість пострілів</th>
+                  <th>Залишок б/к</th>
+                  <th>Час пострілу</th>
+                  <th>Час між пострілами</th>
+                  <th>Дії</th>
+                </tr>
+              </thead>
+              <tbody></tbody>`;
+            const tableBody = newTable.querySelector('tbody');
+            let currentShotCount = 0;
+            item.content.forEach(rowData => {
+              if (rowData.riven) currentShotCount = 0;
+              currentShotCount += parseInt(rowData.shotCount);
+              appendRow(rowData, tableBody, currentShotCount);
+            });
+            tableContainer.appendChild(newTable);
+          } else if (item.isDivider) {
+            appendDivider(item.text, item.coords);
+          }
+        });
+
+        if (data.length === 0 || !data.some(item => item.isTable)) {
+          const newTable = document.createElement('table');
+          newTable.id = 'dataTable';
+          newTable.innerHTML = `
+            <thead>
+              <tr>
+                <th>Рівень</th>
+                <th>Дальність</th>
+                <th>Кут</th>
+                <th>Кількість пострілів</th>
+                <th>Залишок б/к</th>
+                <th>Час пострілу</th>
+                <th>Час між пострілами</th>
+                <th>Дії</th>
+              </tr>
+            </thead>
+            <tbody></tbody>`;
+          tableContainer.appendChild(newTable);
+        }
+
+        updateTotalStats();
+        updateAmmoDisplay();
+        updateLastShotTime();
+        makeDividersEditable();
+      };
+
+      const appendRow = (rowData, targetBody, currentShotCount) => {
+        const newRow = document.createElement('tr');
+        if (currentShotCount > 5 && currentShotCount <= 10) newRow.classList.add('highlight-yellow');
+        else if (currentShotCount > 10) newRow.classList.add('highlight-orange');
+
+        newRow.innerHTML = `
+          <td data-label="Рівень">${rowData.riven}</td>
+          <td data-label="Дальність">${rowData.dalnist}</td>
+          <td data-label="Кут">${rowData.kut}</td>
+          <td data-label="Кількість пострілів">${rowData.shotCount}</td>
+          <td data-label="Залишок б/к">${rowData.ammoLeft}</td>
+          <td data-label="Час пострілу">${rowData.timeDate}</td>
+          <td data-label="Час між пострілами">${rowData.timeBetween}</td>
+          <td data-label="Дії">
+            <button class="delete-btn" title="Видалити запис">&times;</button>
+          </td>`;
+        targetBody.appendChild(newRow);
+
+        newRow.querySelector('.delete-btn').addEventListener('click', (e) => {
+          const rowToDelete = e.target.closest('tr');
+          const isFirstShot = rowToDelete.querySelector('td[data-label="Рівень"]').textContent.trim() !== '';
+          const isLastRow = rowToDelete === targetBody.lastElementChild;
+
+          if (isFirstShot) {
+            alert('Не можна видалити перший запис у цілі. Створіть нову ціль, щоб почати з чистого листа.');
+            return;
+          }
+          if (isLastRow) {
+            const shotCount = parseInt(rowToDelete.querySelector('td[data-label="Кількість пострілів"]').textContent);
+            currentAmmo += shotCount;
+          }
+          rowToDelete.remove();
+          updateAmmoDisplay();
+          saveData();
+        });
+      };
+
+      const appendDivider = (text = '', coords = '') => {
+        const divider = document.createElement('div');
+        divider.classList.add('section-divider');
+
+        const dividerContent = document.createElement('div');
+        dividerContent.classList.add('divider-content');
+
+        const dividerText = document.createElement('span');
+        dividerText.classList.add('divider-text');
+
+        let displayText = text;
+        if (!displayText.includes('Ціль:')) displayText = text ? `Ціль: ${text}` : 'Нова ціль';
+        dividerText.textContent = `${displayText}`;
+
+        const dividerCoords = document.createElement('span');
+        dividerCoords.classList.add('divider-coords');
+        dividerCoords.textContent = coords;
+
+        dividerContent.appendChild(dividerText);
+        if (coords) dividerContent.appendChild(dividerCoords);
+
+        divider.appendChild(dividerContent);
+        tableContainer.appendChild(divider);
+
+        const newTable = document.createElement('table');
+        newTable.id = 'dataTable';
+        newTable.innerHTML = `
+          <thead>
+            <tr>
+              <th>Рівень</th>
+              <th>Дальність</th>
+              <th>Кут</th>
+              <th>Кількість пострілів</th>
+              <th>Залишок б/к</th>
+              <th>Час пострілу</th>
+              <th>Час між пострілами</th>
+              <th>Дії</th>
+            </tr>
+          </thead>
+          <tbody></tbody>`;
+        tableContainer.appendChild(newTable);
+        makeDividersEditable();
+      };
+
+      const updateLastShotTime = () => {
+        const allRows = document.querySelectorAll('#table-container tbody tr');
+        if (allRows.length > 0) {
+          const lastRow = allRows[allRows.length - 1];
+          const timeCell = lastRow.querySelector('td[data-label="Час пострілу"]');
+          if (timeCell && timeCell.textContent) {
+            try {
+              const [datePart, timePart] = timeCell.textContent.split(' ');
+              const [day, month, year] = datePart.split('.');
+              const [hours, minutes, seconds] = timePart.split(':');
+              lastShotTime = new Date(year, month - 1, day, hours, minutes, seconds);
+            } catch (e) { lastShotTime = null; }
+          } else lastShotTime = null;
+        } else lastShotTime = null;
+      };
+
+      const makeDividersEditable = () => {
+        document.querySelectorAll('.section-divider').forEach(divider => {
+          divider.removeEventListener('dblclick', handleDividerDblClick);
+          divider.addEventListener('dblclick', handleDividerDblClick);
+        });
+      };
+
+      const handleDividerDblClick = (event) => {
+        const divider = event.currentTarget;
+        const textSpan = divider.querySelector('.divider-text');
+        if (!textSpan) return;
+        if (divider.querySelector('.divider-input')) return;
+
+        const currentText = textSpan.textContent.replace('Ціль: ', '');
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'divider-input';
+        input.value = currentText;
+
+        const dividerContent = divider.querySelector('.divider-content');
+        dividerContent.replaceChild(input, textSpan);
+        input.focus();
+
+        const finishEdit = () => {
+          const newText = input.value.trim();
+          const newSpan = document.createElement('span');
+          newSpan.className = 'divider-text';
+          newSpan.textContent = `Ціль: ${newText}`;
+
+          if (dividerContent.contains(input)) dividerContent.replaceChild(newSpan, input);
+
+          const dividerIndex = Array.from(tableContainer.children).indexOf(divider);
+          if (dividerIndex !== -1 && shiftsData[currentShift][dividerIndex - 1]) {
+            shiftsData[currentShift][dividerIndex - 1].text = newSpan.textContent;
+            saveData();
+          }
+          makeDividersEditable();
+        };
+
+        input.addEventListener('blur', finishEdit);
+        input.addEventListener('keydown', (e) => { if (e.key === 'Enter') finishEdit(); });
+      };
+
+      // shift switching
+      chesterShiftBtn.addEventListener('click', () => {
+        saveData(); currentShift = 'Честер';
+        currentAmmo = parseInt(localStorage.getItem(`${currentShift}-ammo`)) || 0;
+        loadData(); updateShiftButtons();
+      });
+      kozakShiftBtn.addEventListener('click', () => {
+        saveData(); currentShift = 'Козак';
+        currentAmmo = parseInt(localStorage.getItem(`${currentShift}-ammo`)) || 0;
+        loadData(); updateShiftButtons();
+      });
+
+      settingsBtn.addEventListener('click', () => { settingsModal.style.display = 'block'; updateShiftButtons(); });
+      calculatorBtn.addEventListener('click', () => {
+        calculatorModal.style.display = 'block';
+        calcResult.textContent = '0';
+        calcInput1.value = '';
+        calcInput2.value = '';
+        writeBackButtons.style.display = 'none';
+      });
+      closeSettingsBtn.addEventListener('click', () => { settingsModal.style.display = 'none'; });
+      closeCalcBtn.addEventListener('click', () => { calculatorModal.style.display = 'none'; });
+      window.addEventListener('click', (e) => {
+        if (e.target === settingsModal) settingsModal.style.display = 'none';
+        if (e.target === calculatorModal) calculatorModal.style.display = 'none';
+      });
+
+      setAmmoBtn.addEventListener('click', () => {
+        const value = parseInt(ammoInput.value);
+        if (!isNaN(value) && value >= 0) {
+          currentAmmo = value; updateAmmoDisplay(); saveData();
+          alert('Кількість б/к оновлено!'); settingsModal.style.display = 'none';
+        } else alert('Будь ласка, введіть коректне число для б/к.');
+      });
+
+      // import JSON only
+      uploadInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+          try {
+            const loadedData = JSON.parse(event.target.result);
+            if (loadedData.shiftsData) {
+              Object.assign(shiftsData, loadedData.shiftsData);
+              localStorage.setItem('shiftsData', JSON.stringify(shiftsData));
+              if (loadedData.ammoData) {
+                ['Козак','Честер'].forEach(shift=>{
+                  const key = `${shift}-ammo`;
+                  if (loadedData.ammoData[key] !== null && loadedData.ammoData[key] !== undefined) {
+                    localStorage.setItem(key, loadedData.ammoData[key]);
+                  }
+                });
+              }
+              currentShift = localStorage.getItem('currentShift') || 'Козак';
+              currentAmmo = parseInt(localStorage.getItem(`${currentShift}-ammo`)) || 0;
+              loadData(); updateShiftButtons();
+              alert('Дані успішно завантажено!'); settingsModal.style.display = 'none';
+            } else alert('Некоректний формат файлу. Оберіть JSON з даними.');
+          } catch (error) {
+            alert('Помилка при читанні файлу. Переконайтесь, що це коректний JSON-файл.');
+          }
+        };
+        reader.readAsText(file);
+      });
+
+      // export JSON
+      downloadBtn.addEventListener('click', () => {
+        const dataToSave = {
+          shiftsData: shiftsData,
+          ammoData: {
+            'Козак-ammo': localStorage.getItem('Козак-ammo'),
+            'Честер-ammo': localStorage.getItem('Честер-ammo')
+          }
+        };
+        const jsonData = JSON.stringify(dataToSave, null, 2);
+        const blob = new Blob([jsonData], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `дані-${new Date().toISOString().slice(0,10)}.json`;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+      });
+
+      // save PDF
+      downloadPdfBtn.addEventListener('click', () => {
+        const element = document.getElementById('table-container');
+        if (!element || element.children.length <= 1) { alert('Немає даних для збереження в PDF.'); return; }
+        const options = {
+          margin:[10,10,10,10],
+          filename:`дані-${new Date().toISOString().slice(0,10)}.pdf`,
+          image:{type:'jpeg', quality:0.98},
+          html2canvas:{scale:2, backgroundColor: null},
+          jsPDF:{unit:'mm', format:'a4', orientation:'portrait'}
+        };
+        html2pdf().from(element).set(options).save();
+      });
+
+      // share PDF (Signal/Viber via system share sheet)
+      sharePdfBtn.addEventListener('click', async () => {
+        const element = document.getElementById('table-container');
+        if (!element || element.children.length <= 1) { alert('Немає даних для PDF.'); return; }
+        const options = {
+          margin:[10,10,10,10],
+          filename:`дані-${new Date().toISOString().slice(0,10)}.pdf`,
+          image:{type:'jpeg', quality:0.98},
+          html2canvas:{scale:2, backgroundColor: null},
+          jsPDF:{unit:'mm', format:'a4', orientation:'portrait'}
+        };
+        try{
+          const worker = html2pdf().from(element).set(options).toPdf();
+          const pdf = await worker.get('pdf');
+          const blob = pdf.output('blob');
+          const pdfFile = new File([blob], options.filename, { type:'application/pdf' });
+          if (navigator.canShare && navigator.canShare({ files:[pdfFile] })) {
+            await navigator.share({ files:[pdfFile], title:'Дані', text:'Дані у PDF' });
+          } else {
+            alert('Браузер не підтримує поділитися PDF напряму. Збережіть PDF і поділіться вручну.');
+          }
+        }catch(err){
+          console.error(err);
+          alert('Помилка при створенні або відправці PDF.');
+        }
+      });
+
+      clearAllDataBtn.addEventListener('click', () => {
+        const confirmed = confirm('Ви впевнені, що хочете видалити всі дані? Цю дію неможливо скасувати.');
+        if (confirmed) {
+          localStorage.removeItem('shiftsData');
+          localStorage.removeItem('Козак-ammo');
+          localStorage.removeItem('Честер-ammo');
+          location.reload();
+        }
+      });
+
+      // submit new row
+      dataForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const riven = rivenInput.value.trim();
+        const dalnist = dalnistInput.value.trim();
+        const kut = kutInput.value.trim();
+        if (riven && dalnist && kut) {
+          const now = new Date();
+          const formattedDate =
+            `${String(now.getDate()).padStart(2,'0')}.${String(now.getMonth()+1).padStart(2,'0')}.${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+          const newRowData = { riven, dalnist, kut, shotCount:'0', ammoLeft: currentAmmo, timeDate: formattedDate, timeBetween:'' };
+          const lastTableBody = document.querySelector('#table-container table:last-child tbody');
+          if (lastTableBody) {
+            appendRow(newRowData, lastTableBody, 0);
+            saveData(); dataForm.reset(); updateAmmoDisplay();
+          } else alert('Помилка: Не вдалося знайти таблицю для додавання даних. Створіть нову ціль.');
+        }
+      });
+
+      // undo last shot
+      undoShotBtn.addEventListener('click', () => {
+        const lastTableBody = document.querySelector('#table-container table:last-child tbody');
+        if (lastTableBody) {
+          const rows = lastTableBody.querySelectorAll('tr');
+          if (rows.length > 0) {
+            const lastRow = rows[rows.length - 1];
+            const lastShotCount = parseInt(lastRow.querySelector('td[data-label="Кількість пострілів"]').textContent);
+            if (lastShotCount === 1 && !lastRow.querySelector('td[data-label="Рівень"]').textContent.trim()) {
+              currentAmmo++; lastTableBody.removeChild(lastRow);
+              updateAmmoDisplay(); saveData(); updateLastShotTime();
+            } else alert('Відмінити можна тільки останній постріл. Щоб видалити інший, скористайтесь кнопкою "Видалити".');
+          }
+        }
+      });
+
+      // new target
+      newTargetBtn.addEventListener('click', () => {
+        const targetNumber = newTargetInput.value.trim();
+        const coordsValue = coordsInput.value.trim();
+        const lastTableBody = document.querySelector('#table-container table:last-child tbody');
+        if (lastTableBody && lastTableBody.children.length > 0) {
+          appendDivider(targetNumber, coordsValue); saveData();
+        } else if (!lastTableBody && shiftsData[currentShift] && shiftsData[currentShift].length > 0) {
+          appendDivider(targetNumber, coordsValue); saveData();
+        } else {
+          alert('Щоб створити нову ціль, додайте хоча б один запис.');
+        }
+        newTargetInput.value=''; coordsInput.value=COORDS_PREFIX; updateLastShotTime();
+      });
+
+      // search filter by divider text
+      searchInput.addEventListener('input', () => {
+        const filter = searchInput.value.trim().toLowerCase();
+        const elements = Array.from(tableContainer.children);
+        let isDividerFound = false;
+        elements.forEach((element) => {
+          if (element.classList.contains('shift-header')) {
+            element.style.display = '';
+          } else if (element.classList.contains('section-divider')) {
+            const dividerText = element.querySelector('.divider-text').textContent.toLowerCase();
+            if (filter === '' || dividerText.includes(filter)) {
+              element.style.display = ''; isDividerFound = true;
+            } else { element.style.display = 'none'; isDividerFound = false; }
+          } else if (element.tagName === 'TABLE') {
+            element.style.display = (isDividerFound || filter === '') ? '' : 'none';
+            isDividerFound = false;
+          }
+        });
+      });
+
+      // calculator helpers
+      const calculate = (op) => {
+        const num1 = parseFloat(calcInput1.value);
+        const num2 = parseFloat(calcInput2.value);
+        if (isNaN(num1) || isNaN(num2)) { calcResult.textContent='Помилка'; writeBackButtons.style.display='none'; return; }
+        calcResult.textContent = op === '+' ? (num1+num2) : (num1-num2);
+        writeBackButtons.style.display='flex';
+      };
+      calcAddBtn.addEventListener('click', () => calculate('+'));
+      calcSubtractBtn.addEventListener('click', () => calculate('-'));
+      calcInput1.addEventListener('focus', () => { takeValueMenu.style.display='flex'; });
+      calcInput1.addEventListener('blur', (e) => {
+        setTimeout(() => {
+          if (!e.relatedTarget || !takeValueMenu.contains(e.relatedTarget)) takeValueMenu.style.display='none';
+        }, 120);
+      });
+      takeRivenBtn.addEventListener('click', () => { calcInput1.value=rivenInput.value; takeValueMenu.style.display='none'; });
+      takeDalnistBtn.addEventListener('click', () => { calcInput1.value=dalnistInput.value; takeValueMenu.style.display='none'; });
+      takeKutBtn.addEventListener('click', () => { calcInput1.value=kutInput.value; takeValueMenu.style.display='none'; });
+      writeToRivenBtn.addEventListener('click', () => { rivenInput.value=calcResult.textContent; calculatorModal.style.display='none'; });
+      writeToDalnistBtn.addEventListener('click', () => { dalnistInput.value=calcResult.textContent; calculatorModal.style.display='none'; });
+      writeToKutBtn.addEventListener('click', () => { kutInput.value=calcResult.textContent; calculatorModal.style.display='none'; });
+
+      updateShiftButtons();
+      loadData();
+    });
+  </script>
+</body>
+</html>
